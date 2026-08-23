@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 
 	"golang.org/x/crypto/bcrypt"
@@ -68,11 +69,51 @@ func CreateUserController(writer http.ResponseWriter, req *http.Request) {
 	writer.Write(jsonResponse)
 }
 
+type ReadUserInput struct {
+	Id int
+}
+
 func ReadUserController(writer http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodGet {
 		http.Error(writer, "Bad request", http.StatusBadRequest)
 		return
 	}
+
+	if req.ContentLength == 0 {
+		http.Error(writer, "No data sent", http.StatusBadRequest)
+		return
+	}
+
+	data, err := io.ReadAll(req.Body)
+	if err != nil {
+		log.Fatal("Error: ", err)
+		http.Error(writer, "Server error", http.StatusInternalServerError)
+		return
+	}
+
+	var userId ReadUserInput
+	err = json.Unmarshal(data, &userId)
+	if err != nil {
+		log.Fatal("Error: ", err)
+		http.Error(writer, "Server error", http.StatusInternalServerError)
+		return
+	}
+
+
+	user, err := ReadUser(userId.Id)
+	if err != nil {
+		log.Fatal("Error: ", err)
+		http.Error(writer, "Server error", http.StatusInternalServerError)
+		return
+	}
+
+	response, err := json.Marshal(user)
+	if err != nil {
+		http.Error(writer, "Server error", http.StatusInternalServerError)
+		return
+	}
+
+	writer.Write(response)
 }
 
 func UpdateUserController(writer http.ResponseWriter, req *http.Request) {

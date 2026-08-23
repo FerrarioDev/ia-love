@@ -28,7 +28,7 @@ func InitializeDB() error {
 		id INTEGER PRIMARY KEY,
 		email TEXT NOT NULL,
 		username TEXT NOT NULL,
-		description TEXT DEFAULT NULL,
+		description TEXT DEFAULT '',
 		password TEXT NOT NULL,
 		profile_picture BLOB DEFAULT NULL,
 		session_id TEXT DEFAULT NULL
@@ -62,4 +62,29 @@ func CreateUser(newUser UserInput) error {
 	}
 
 	return nil
+}
+
+type User struct {
+	Email string
+	Username string
+	ProfilePic []byte
+	Description string
+}
+
+func ReadUser(id int) (User, error) {
+	var email string
+	var username string
+	var profilePic []byte
+	var description string
+
+	query := `
+	SELECT email, username, profile_picture, description
+	FROM User
+	WHERE id = ?;`
+	err := db.QueryRow(query, id).Scan(&email, &username, &profilePic, &description)
+	if err != nil {
+		return User{}, err
+	}
+
+	return User{email, username, profilePic, description}, nil
 }
