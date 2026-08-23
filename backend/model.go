@@ -1,6 +1,8 @@
 package main
 
-import "database/sql"
+import (
+	"database/sql"
+)
 
 var db *sql.DB
 
@@ -28,7 +30,6 @@ func InitializeDB() error {
 		username TEXT NOT NULL,
 		description TEXT DEFAULT NULL,
 		password TEXT NOT NULL,
-		role TEXT NOT NULL DEFAULT 'user',
 		profile_picture BLOB DEFAULT NULL,
 		session_id TEXT DEFAULT NULL
 	);
@@ -44,6 +45,18 @@ func InitializeDB() error {
 		FOREIGN KEY(chat_id) REFERENCES Chat(id)
 	);
 	`)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func CreateUser(newUser UserInput) error {
+	_, err := db.Exec(`
+	INSERT INTO User (email, username, password)
+	VALUES (?, ?, ?)
+	`, newUser.Email, newUser.Username, newUser.Password)
 	if err != nil {
 		return err
 	}
