@@ -15,8 +15,9 @@ func main () {
 		return
 	}
 
-	http.HandleFunc("/users/create", CreateUserController)
-	http.HandleFunc("/users/read", ReadUserController)
+	http.HandleFunc("/v1/users", UserController)
+	http.HandleFunc("/v1/users/", UserController)
+	http.HandleFunc("/v1/users/{id}", UserController)
 
 	fmt.Println("Servidor levantado en puerto 9000")
 	err = http.ListenAndServe(":9000", nil)

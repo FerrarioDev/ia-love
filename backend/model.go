@@ -52,39 +52,58 @@ func InitializeDB() error {
 	return nil
 }
 
-func CreateUser(newUser UserInput) error {
+type CreateUserResponseData struct {
+	Id int
+	Username string
+}
+
+type NewUserInput struct {
+	Email string
+	Username string
+	Password string
+}
+
+func CreateUser(newUser NewUserInput) (CreateUserResponseData, error) {
 	_, err := db.Exec(`
 	INSERT INTO User (email, username, password)
 	VALUES (?, ?, ?)
 	`, newUser.Email, newUser.Username, newUser.Password)
 	if err != nil {
-		return err
+		return CreateUserResponseData{}, nil
 	}
 
-	return nil
+	var createdUser CreateUserResponseData
+	query := `
+	SELECT id, username
+	FROM User
+	WHERE email = ?`
+	err = db.QueryRow(query, newUser.Email).Scan(&createdUser.Id, &createdUser.Username)
+	if err != nil {
+		return CreateUserResponseData{}, err
+	}
+
+	return createdUser, nil 
 }
 
 type User struct {
-	Email string
 	Username string
 	ProfilePic []byte
 	Description string
 }
 
-func ReadUser(id int) (User, error) {
-	var email string
+func ReadUser(id int64) (User, error) {
 	var username string
 	var profilePic []byte
 	var description string
 
 	query := `
-	SELECT email, username, profile_picture, description
+	SELECT username, profile_picture, description
 	FROM User
 	WHERE id = ?;`
-	err := db.QueryRow(query, id).Scan(&email, &username, &profilePic, &description)
+	err := db.QueryRow(query, id).Scan(&username, &profilePic, &description)
 	if err != nil {
 		return User{}, err
 	}
 
-	return User{email, username, profilePic, description}, nil
+	return User{username, profilePic, description}, nil
 }
